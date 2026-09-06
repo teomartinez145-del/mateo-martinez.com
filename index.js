@@ -2,6 +2,79 @@ document.addEventListener('DOMContentLoaded', () => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* =========================================================
+     -1. PROJECTS DATA + DOM BUILD
+     Se construye ANTES de los fallbacks de imagen (sección 1),
+     para que esas imágenes ya existan en el DOM cuando se
+     registren los listeners de error.
+  ========================================================= */
+  const PROJECTS = [
+    { title: 'Greenwave', image: 'images/project-greenwave.jpg' },
+    { title: 'Kick Off', image: 'images/project-kickoff.jpg' },
+    { title: 'GraphiXplore', image: 'images/project-graphixplore.jpg' },
+    { title: 'Yale School of Art', image: 'images/project-yale-art.jpg' },
+    { title: 'Oak Harbor Festival', image: 'images/project-oak-harbor.jpg' },
+    { title: 'Movie Theater', image: 'images/project-movie-theater.jpg' }
+  ];
+
+  function buildProjectsShowcase() {
+    const leftCol = document.getElementById('circular-left-col');
+    const rightCol = document.getElementById('circular-right-col');
+    const grid = document.getElementById('projects-grid-fallback');
+    if (!leftCol || !rightCol || !grid) return;
+
+    // --- Desktop: columna de títulos (izquierda) ---
+    const leftStage = document.createElement('div');
+    leftStage.className = 'circular-scroll-showcase__stage';
+    PROJECTS.forEach((item) => {
+      const title = document.createElement('div');
+      title.className = 'circular-item circular-item--title';
+      title.textContent = item.title;
+      leftStage.appendChild(title);
+    });
+    leftCol.appendChild(leftStage);
+
+    // --- Desktop: columna de tarjetas de imagen (derecha) ---
+    const rightStage = document.createElement('div');
+    rightStage.className = 'circular-scroll-showcase__stage';
+    PROJECTS.forEach((item) => {
+      const card = document.createElement('div');
+      card.className = 'circular-item circular-item--card';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title;
+      img.className = 'project-image';
+      img.draggable = false;
+      card.appendChild(img);
+      rightStage.appendChild(card);
+    });
+    rightCol.appendChild(rightStage);
+
+    // --- Mobile / reduced-motion: grilla estática ---
+    PROJECTS.forEach((item) => {
+      const cell = document.createElement('div');
+      cell.className = 'grid-item';
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'grid-image';
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.title;
+      img.className = 'project-image';
+      imgWrap.appendChild(img);
+
+      const title = document.createElement('p');
+      title.className = 'grid-title';
+      title.textContent = item.title;
+
+      cell.appendChild(imgWrap);
+      cell.appendChild(title);
+      grid.appendChild(cell);
+    });
+  }
+
+  buildProjectsShowcase();
+
+  /* =========================================================
      0. HERO — WarpText (WebGL glass-distortion text on the H1)
   ========================================================= */
   function initHeroWarpText() {
@@ -488,7 +561,7 @@ void main() {
   }
 
   /* =========================================================
-     3. GSAP-powered effects (Skill tag pill hover + About text block reveal + About photo parallax)
+     3. GSAP-powered effects
   ========================================================= */
   if (typeof gsap === 'undefined') return;
 
@@ -600,11 +673,7 @@ void main() {
 
   initSkillTagPillHover();
 
-  /* ---------- 3c. About Me text — line-by-line block reveal (adapted from TextBlockAnimation) ----------
-     GSAP SplitText es un plugin pago que no está disponible en el CDN gratuito
-     que ya usás, así que reconstruyo las líneas reales a mano: envuelvo cada
-     palabra en un span temporal, mido en qué línea cae según su posición
-     vertical, y agrupo las palabras de cada línea en su propio wrapper. */
+  /* ---------- 3c. About Me text — line-by-line block reveal (adapted from TextBlockAnimation) ---------- */
   function initAboutTextBlockReveal() {
     const paragraphs = document.querySelectorAll('.about-intro .about-text');
     if (!paragraphs.length) return;
@@ -705,6 +774,115 @@ void main() {
   }
 
   initAboutTextBlockReveal();
+
+  /* ---------- 3d. Projects — circular scroll showcase (adapted from CircularSplitRoll) ----------
+     Al hacer scroll, la sección queda "pineada" y dos columnas giran como si
+     rotaran sobre un cilindro invisible: títulos a la izquierda, tarjetas de
+     imagen a la derecha, agrandándose/iluminándose al pasar por el centro. */
+  function initCircularProjectsShowcase() {
+    const root = document.getElementById('circular-scroll-showcase');
+    const sticky = document.getElementById('circular-scroll-sticky');
+    if (!root || !sticky) return;
+
+    const mm = gsap.matchMedia();
+
+    mm.add('(min-width: 1025px)', () => {
+      const titleNodes = gsap.utils.toArray('.circular-item--title');
+      const cardNodes = gsap.utils.toArray('.circular-item--card');
+      const total = PROJECTS.length;
+      if (!total) return;
+
+      const config = {
+        leftRadiusX: 140,
+        leftRadiusY: 170,
+        rightRadiusX: 210,
+        rightRadiusY: 250,
+        leftAngleOffset: Math.PI,
+        rightAngleOffset: 0,
+        focusPhase: 0.5,
+        leftDepthMax: 30,
+        rightDepthMax: 40,
+        titleSideScale: 0.68,
+        titleCenterScale: 1,
+        titleSideOpacity: 0.18,
+        titleCenterOpacity: 1,
+        cardSideScale: 0.58,
+        cardCenterScale: 1,
+        cardSideOpacity: 0.14,
+        cardCenterOpacity: 1,
+        titleFocusStart: 0.42,
+        titleFocusPower: 2.6,
+        cardFocusStart: 0.45,
+        cardFocusPower: 3.2
+      };
+
+      function wrapProgress(value) {
+        let v = value % 1;
+        if (v < 0) v += 1;
+        return v;
+      }
+
+      function getCircularPosition(progress, radiusX, radiusY, angleOffset) {
+        const angle = progress * Math.PI * 2 + angleOffset;
+        return {
+          x: Math.sin(angle) * radiusX,
+          y: Math.cos(angle) * radiusY,
+          horizontalDepth: Math.sin(angle)
+        };
+      }
+
+      function getStrength(value) {
+        return gsap.utils.clamp(0, 1, gsap.utils.mapRange(-1, 1, 0, 1, value));
+      }
+
+      function shapeFocus(strength, start, power) {
+        const normalized = gsap.utils.clamp(0, 1, (strength - start) / (1 - start));
+        return Math.pow(normalized, power);
+      }
+
+      gsap.set([...titleNodes, ...cardNodes], { opacity: 1 });
+
+      function render(progress) {
+        titleNodes.forEach((node, i) => {
+          const localProgress = wrapProgress(i / total - progress + config.focusPhase / total);
+          const pos = getCircularPosition(localProgress, config.leftRadiusX, config.leftRadiusY, config.leftAngleOffset);
+          const strength = shapeFocus(getStrength(pos.horizontalDepth), config.titleFocusStart, config.titleFocusPower);
+          const scale = gsap.utils.interpolate(config.titleSideScale, config.titleCenterScale, strength);
+          const opacity = gsap.utils.interpolate(config.titleSideOpacity, config.titleCenterOpacity, strength);
+          const zIndex = Math.round(gsap.utils.interpolate(1, config.leftDepthMax, strength));
+          gsap.set(node, { x: pos.x, y: pos.y, scale, opacity, zIndex });
+        });
+
+        cardNodes.forEach((node, i) => {
+          const localProgress = wrapProgress(i / total - progress + config.focusPhase / total);
+          const pos = getCircularPosition(localProgress, config.rightRadiusX, config.rightRadiusY, config.rightAngleOffset);
+          const strength = shapeFocus(getStrength(-pos.horizontalDepth), config.cardFocusStart, config.cardFocusPower);
+          const scale = gsap.utils.interpolate(config.cardSideScale, config.cardCenterScale, strength);
+          const opacity = gsap.utils.interpolate(config.cardSideOpacity, config.cardCenterOpacity, strength);
+          const zIndex = Math.round(gsap.utils.interpolate(1, config.rightDepthMax, strength));
+          gsap.set(node, { x: pos.x, y: pos.y, scale, opacity, zIndex });
+        });
+      }
+
+      render(0);
+
+      const scrollTrigger = ScrollTrigger.create({
+        trigger: root,
+        start: 'top top',
+        end: `+=${260 * total}%`,
+        pin: sticky,
+        scrub: 1.2,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => render(self.progress)
+      });
+
+      return () => scrollTrigger.kill();
+    });
+
+    return () => mm.revert();
+  }
+
+  initCircularProjectsShowcase();
 
   /* ---------- 3b. About photo parallax ---------- */
   const profilePhoto = document.querySelector('.profile-photo, .image-fallback');

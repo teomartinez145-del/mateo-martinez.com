@@ -184,51 +184,18 @@
     <div class="projects-container">
       <p class="section-label">My Work</p>
       <h2 class="projects-heading">Projects</h2>
+    </div>
 
-      <div class="projects-grid">
-
-        <a href="#" class="project-card project-card--large">
-          <img src="images/project-photography.jpg" alt="Photography" class="project-image">
-          <div class="project-overlay">
-            <span class="project-title">Photography</span>
-            <span class="project-arrow">&#8594;</span>
-          </div>
-        </a>
-
-        <a href="#" class="project-card">
-          <img src="images/project-own-business.jpg" alt="Own Business" class="project-image">
-          <div class="project-overlay">
-            <span class="project-title">Own Business</span>
-            <span class="project-arrow">&#8594;</span>
-          </div>
-        </a>
-
-        <a href="#" class="project-card">
-          <img src="WEB DESIGN.jpg" alt="UI/UX Design" class="project-image">
-          <div class="project-overlay">
-            <span class="project-title">UI/UX Design</span>
-            <span class="project-arrow">&#8594;</span>
-          </div>
-        </a>
-
-        <a href="#" class="project-card">
-          <img src="images/project-product-design.jpg" alt="Product Design" class="project-image">
-          <div class="project-overlay">
-            <span class="project-title">Product Design</span>
-            <span class="project-arrow">&#8594;</span>
-          </div>
-        </a>
-
-        <a href="#" class="project-card">
-          <img src="images/project-videography.jpg" alt="Videography" class="project-image">
-          <div class="project-overlay">
-            <span class="project-title">Videography</span>
-            <span class="project-arrow">&#8594;</span>
-          </div>
-        </a>
-
+    <div class="circular-scroll-showcase" id="circular-scroll-showcase" aria-hidden="true">
+      <div class="circular-scroll-showcase__sticky" id="circular-scroll-sticky">
+        <div class="circular-scroll-showcase__row">
+          <div class="circular-scroll-showcase__col circular-scroll-showcase__col--left" id="circular-left-col"></div>
+          <div class="circular-scroll-showcase__col circular-scroll-showcase__col--right" id="circular-right-col"></div>
+        </div>
       </div>
     </div>
+
+    <div class="projects-grid-fallback" id="projects-grid-fallback"></div>
   </section>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
